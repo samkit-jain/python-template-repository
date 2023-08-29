@@ -23,6 +23,14 @@ This is a template repository for Python projects with Black, Bandit, Pylint and
 | [staging](https://github.com/samkit-jain/python-template-repository/tree/staging) | Staging     | `staging` |
 | [prod](https://github.com/samkit-jain/python-template-repository/tree/prod)       | Production  | `prod`    |
 
+## Setup
+
+1. Install Python 3.10.
+2. Create a virtual environment, `python3 -m venv venv`.
+3. Activate the virtual environment, `source venv/bin/activate`.
+4. Install the core dependencies, `python -m pip install -r requirements.txt`.
+5. Install the optional dependencies, `python -m pip install -r extra_requirements.txt`.
+
 ## Contributing Guidelines
 
 ### How to contribute?
