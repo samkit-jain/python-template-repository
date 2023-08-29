@@ -37,6 +37,8 @@ phases:
       - python -m black --check .
       - echo "Checking for lint errors"
       - python -m pylint --recursive y .
+      - echo "Running tests"
+      - python -m pytest tests/
       - echo "Building Docker image"
       - docker build -t "$ECR_REGISTRY"/"$ECR_REPOSITORY":"$CODEBUILD_RESOLVED_SOURCE_VERSION" .
 
