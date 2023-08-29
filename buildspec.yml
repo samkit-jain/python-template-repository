@@ -1,0 +1,45 @@
+version: 0.2
+
+env:
+  variables:
+    ECR_REGISTRY: 123456789012.dkr.ecr.ap-south-1.amazonaws.com
+    ECR_REPOSITORY: python-template-repository
+  secrets-manager:
+    DOCKER_HUB_USERNAME: arn:aws:secretsmanager:ap-south-1:123456789012:secret:docker-hub:username
+    DOCKER_HUB_PASSWORD: arn:aws:secretsmanager:ap-south-1:123456789012:secret:docker-hub:password
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.10
+
+  pre_build:
+    on-failure: ABORT
+    commands:
+      - echo "Loading extra environment variables related to CodeBuild"
+      - wget -O codebuild-extras.sh https://gist.githubusercontent.com/samkit-jain/3c3859871627e3bda7596da1a4305093/raw/codebuild-extras.sh && chmod +x codebuild-extras.sh && . ./codebuild-extras.sh
+      - echo "Upgrading pip"
+      - python -m pip install --upgrade pip
+      - echo "Installing the requirements"
+      - python -m pip install -r requirements.txt
+      - python -m pip install -r extra_requirements.txt
+      - echo "Logging in to ECR"
+      - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+      - echo "Logging in to Docker Hub"
+      - docker login --username "$DOCKER_HUB_USERNAME" --password "$DOCKER_HUB_PASSWORD"
+
+  build:
+    on-failure: ABORT
+    commands:
+      - echo "Scanning for security issues"
+      - python -m bandit -c pyproject.toml -r .
+      - echo "Checking the code format"
+      - python -m black --check .
+      - echo "Checking for lint errors"
+      - python -m pylint --recursive y .
+      - echo "Building Docker image"
+      - docker build -t "$ECR_REGISTRY"/"$ECR_REPOSITORY":"$CODEBUILD_RESOLVED_SOURCE_VERSION" .
+
+  post_build:
+    commands:
+      - docker push "$ECR_REGISTRY"/"$ECR_REPOSITORY":"$CODEBUILD_RESOLVED_SOURCE_VERSION"
